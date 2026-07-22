@@ -329,6 +329,10 @@
     <div class="kios">
       <span class="kios-tag">📝 Isi Data</span>
 
+      <label for="kodeAkses">🔒 Kode Akses</label>
+      <input type="text" id="kodeAkses" placeholder="Masukkan kode akses yang kamu terima">
+      <div class="hint">Belum punya kode? Hubungi penyedia layanan ini untuk mendapatkannya.</div>
+
       <label for="nama">Nama Produk</label>
       <input type="text" id="nama" placeholder="Contoh: Keripik Singkong Balado Pedas">
 
@@ -411,11 +415,21 @@ function clearError(){
   errMsg.textContent = '';
 }
 
+// Auto-isi kode akses kalau sudah pernah dimasukkan sebelumnya
+const kodeInput = document.getElementById('kodeAkses');
+const savedKode = localStorage.getItem('notaAiKodeAkses');
+if(savedKode){ kodeInput.value = savedKode; }
+
 genBtn.addEventListener('click', async ()=>{
   clearError();
   const nama = document.getElementById('nama').value.trim();
   const keunggulan = document.getElementById('keunggulan').value.trim();
+  const kode = document.getElementById('kodeAkses').value.trim();
 
+  if(!kode){
+    showError("🔒 Masukkan kode akses dulu, ya.");
+    return;
+  }
   if(!nama || !keunggulan){
     showError("❗ Isi dulu nama produk dan keunggulannya, ya.");
     return;
@@ -445,7 +459,7 @@ Ketentuan caption:
     const response = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt, kode })
     });
 
     const data = await response.json();
@@ -453,6 +467,9 @@ Ketentuan caption:
     if(!response.ok){
       throw new Error(data.error || ("Gagal menghubungi layanan AI (status " + response.status + ")"));
     }
+
+    // Kode benar (server menerima) → simpan biar tidak perlu ketik ulang
+    localStorage.setItem('notaAiKodeAkses', kode);
     const textBlock = (data.content || []).find(b => b.type === "text");
     const captionText = textBlock ? textBlock.text.trim() : "";
 
