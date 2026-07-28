@@ -11,10 +11,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    const accessCode = process.env.ACCESS_CODE;
-    if (accessCode) {
-      if (!kode || kode.trim() !== accessCode.trim()) {
-        res.status(403).json({ error: 'Kode akses salah atau belum diisi.' });
+    const secret = process.env.ACCESS_SECRET;
+    if (secret) {
+      const { isValidCode } = require('./_accessCode.js');
+      const check = isValidCode(secret, kode);
+      if (!check.valid) {
+        res.status(403).json({ error: check.reason || 'Kode akses tidak valid.' });
         return;
       }
     }
